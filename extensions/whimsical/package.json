@@ -37,6 +37,14 @@
       "description": "Generate flowcharts, mindmaps, or sequence diagrams using AI. Just describe what you want and the AI will choose the best diagram type and create it for you."
     }
   ],
+  "ai": {
+    "evals": [
+      {
+        "input": "Create a flowchart for a user login process",
+        "expected": "A flowchart showing the login process steps"
+      }
+    ]
+  },
   "dependencies": {
     "@raycast/api": "1.101.1",
     "@raycast/utils": "2.2.0",
