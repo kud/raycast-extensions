@@ -2,32 +2,68 @@
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "whimsical",
   "title": "Whimsical",
-  "description": "Transform ideas into beautiful diagrams using AI. Automatically generates flowcharts, mindmaps, and sequence diagrams from natural language descriptions.",
+  "description": "Generate AI diagrams and browse your Whimsical workspace. Create flowcharts, mindmaps, and sequence diagrams with AI, plus browse and search your workspace files using the official Whimsical Public API.",
   "icon": "extension-icon.png",
   "author": "kud",
   "license": "MIT",
   "keywords": [
     "whimsical",
+    "ai",
     "diagram",
     "flowchart",
     "mindmap",
-    "sequence",
-    "ai",
-    "visual",
-    "planning"
+    "api",
+    "files",
+    "search",
+    "browse",
+    "workspace",
+    "productivity",
+    "visual"
   ],
   "categories": [
     "Design Tools",
     "Productivity",
     "Developer Tools"
   ],
+  "preferences": [
+    {
+      "name": "clientId",
+      "type": "password",
+      "required": true,
+      "title": "Client ID",
+      "description": "Your Whimsical OAuth Client ID",
+      "placeholder": "cb7d78d2-ceb6-46ce-b119-93545ac4263f"
+    },
+    {
+      "name": "clientSecret",
+      "type": "password",
+      "required": true,
+      "title": "Client Secret",
+      "description": "Your Whimsical OAuth Client Secret",
+      "placeholder": "Your client secret"
+    }
+  ],
   "commands": [
     {
-      "name": "info",
-      "title": "About Whimsical AI Tools",
-      "description": "Learn about the available AI diagram tools",
+      "name": "browse-files",
+      "title": "Browse Workspace",
+      "description": "Navigate your Whimsical workspace hierarchy: teams → projects → files/folders",
       "mode": "view",
-      "src": "src/info.tsx"
+      "src": "src/browse-files.tsx"
+    },
+    {
+      "name": "search-content",
+      "title": "Search Whimsical Content",
+      "description": "Search through your Whimsical files and content",
+      "mode": "view",
+      "src": "src/search-content.tsx"
+    },
+    {
+      "name": "oauth-setup",
+      "title": "Setup OAuth Authentication",
+      "description": "Complete OAuth authentication with Whimsical",
+      "mode": "view",
+      "src": "src/oauth-setup.tsx"
     }
   ],
   "tools": [
