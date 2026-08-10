@@ -15,7 +15,7 @@ import { access, chmod, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { useState } from "react";
 import { discoverScriptCommands, parseDirectoryPreference } from "./lib/discover-script-commands";
-import { facetCounts } from "./lib/convention";
+import { categoryName, environmentName, facetCounts } from "./lib/convention";
 import { learnedPackages, packageForTarget } from "./lib/link-command";
 import { collapseHome } from "./lib/home-path";
 import { fetchFavicon } from "./lib/fetch-icon";
@@ -203,13 +203,13 @@ Put {query} anywhere in a URL to make it a search command: Raycast prompts for t
       <Form.Dropdown
         id="environment"
         title="Environment"
-        info='Prefixes the title with "@work · " and the filename with "work.", so the command gets its own section in the list and can be filtered on.'
+        info='Adds an "@work" field to the subtitle and a "work." prefix to the filename, so the command gets its own section in the list and can be filtered on.'
         value={environment}
         onChange={setEnvironment}
       >
         <Form.Dropdown.Item title="None" value="" />
         {facets.environments.map((entry) => (
-          <Form.Dropdown.Item key={entry.value} title={`@${entry.value}`} value={entry.value} />
+          <Form.Dropdown.Item key={entry.value} title={environmentName(entry.value)} value={entry.value} />
         ))}
         <Form.Dropdown.Item title="New…" value={NEW_VALUE} />
       </Form.Dropdown>
@@ -242,7 +242,7 @@ Put {query} anywhere in a URL to make it a search command: Raycast prompts for t
       >
         <Form.Dropdown.Item title="None" value="" />
         {facets.categories.map((entry) => (
-          <Form.Dropdown.Item key={entry.value} title={`#${entry.value}`} value={entry.value} />
+          <Form.Dropdown.Item key={entry.value} title={categoryName(entry.value)} value={entry.value} />
         ))}
         <Form.Dropdown.Item title="New…" value={NEW_VALUE} />
       </Form.Dropdown>

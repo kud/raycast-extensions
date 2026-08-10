@@ -34,14 +34,14 @@ Commands that do more than open a target are not listed — those are scripts, a
 
 Script Commands give you two strings — a title and a `packageName` shown as the subtitle — and no fields for scope, brand or category. This extension reads three axes out of those two strings:
 
-| Title                  | packageName        | Means                           |
-| ---------------------- | ------------------ | ------------------------------- |
-| `Netflix`              | `Netflix · #media` | package Netflix, category media |
-| `Watch Later`          | `YouTube · #media` | a sub-page of YouTube           |
-| `@work · Abacus Board` | `Jira`             | scoped to the work environment  |
+| Title          | packageName           | Means                          |
+| -------------- | --------------------- | ------------------------------ |
+| `Netflix`      | `Netflix · #media`    | brand Netflix, category media  |
+| `Watch Later`  | `YouTube · #media`    | a sub-page of YouTube          |
+| `Abacus Board` | `Jira · @work · #dev` | scoped to the work environment |
 
-- **`@environment · `** leads the title. It gets its own section in the list, so a work link never sits silently among personal ones.
-- **`· #category`** trails the subtitle rather than the title, because Raycast renders titles in full and metadata in the title is metadata in the column you read for content.
+- **The title is the name and nothing else**, so it stays the string you type to find the command — no scope eating the prefix, no metadata eating the width.
+- **`@environment`** and **`#category`** are fields of the subtitle, each named by its own sigil. Order is therefore not load-bearing, and a work link still reads as a work link wherever it is truncated.
 - **The package** is the app or service — `YouTube`, `The Orchard`, `npm`.
 
 None of it is required. A command written by someone who has never seen this parses fine — it simply has no environment and no category, and its package is whatever the field holds.

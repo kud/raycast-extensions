@@ -5,11 +5,15 @@ import type { ScriptCommand } from "./types";
  * brand or category. Encoding three axes into those two strings is therefore a naming convention
  * rather than a schema, and this module is the one place that knows it:
  *
- *     title        @work · Abacus Board
- *     packageName  Jira
+ *     title        Abacus Board
+ *     packageName  Jira · @work · #dev
  *
  *     title        Watch Later
  *     packageName  YouTube · #media
+ *
+ * The title holds the name and nothing else, so it stays the string you type to find the command.
+ * Every other axis rides in `packageName` as a `·`-delimited field that names itself through its
+ * sigil, which is why field order is not load-bearing here and a fourth axis would cost nothing.
  *
  * Everything here degrades rather than fails. A command written by someone who has never heard of
  * the convention still parses — it simply has no environment and no category, and its brand is
@@ -19,18 +23,26 @@ import type { ScriptCommand } from "./types";
 
 const SEPARATOR = "·";
 
-/** `@work · Name` — the sigil is anchored, so a mid-string `@` (as in `Chat @ Mozilla`) is not a scope. */
-const ENVIRONMENT_PATTERN = new RegExp(`^@([\\p{L}\\p{N}][\\p{L}\\p{N}_-]*)\\s*${SEPARATOR}\\s*(.+)$`, "u");
+/** A whole field that is nothing but a sigil and a token — `Chat @ Mozilla` has spaces, so it is a brand. */
+const ENVIRONMENT_FIELD = /^@([\p{L}\p{N}][\p{L}\p{N}_-]*)$/u;
+const CATEGORY_FIELD = /^#([\p{L}\p{N}][\p{L}\p{N}_-]*)$/u;
 
-/** `Brand · #category`, and the looser `Brand #category` that predates the separator. */
-const CATEGORY_PATTERN = new RegExp(`^(.*?)\\s*(?:${SEPARATOR}\\s*)?#([\\p{L}\\p{N}][\\p{L}\\p{N}_-]*)\\s*$`, "u");
+/** `Brand #category` — the separator-less form that predates the convention. */
+const LEGACY_CATEGORY = /^(.*?)\s+#([\p{L}\p{N}][\p{L}\p{N}_-]*)\s*$/u;
+
+/**
+ * The scope used to live in the title as `@work · Name`, and commands written before the move still
+ * carry it there. Reading it as a fallback keeps this a rename rather than a flag day: a convention
+ * that stops recognising its own previous form strands every command not migrated in the same breath.
+ */
+const LEGACY_TITLE_ENVIRONMENT = new RegExp(`^@([\\p{L}\\p{N}][\\p{L}\\p{N}_-]*)\\s*${SEPARATOR}\\s*(.+)$`, "u");
 
 export type Facets = {
-  /** `work` from `@work · Name`, absent for personal commands. */
+  /** `work` from `Jira · @work`, absent for personal commands. */
   environment?: string;
-  /** The title with the scope stripped — what the command actually is. */
+  /** What the command actually is — the title, with any legacy scope prefix stripped. */
   name: string;
-  /** `packageName` with any category removed. Undefined when the field is empty. */
+  /** `packageName` with the sigil fields removed. Undefined when nothing is left. */
   brand?: string;
   /** `media` from `YouTube · #media`, absent when untagged. */
   category?: string;
@@ -41,19 +53,27 @@ const clean = (value: string | undefined) => {
   return trimmed ? trimmed : undefined;
 };
 
-export const facetsOf = (command: Pick<ScriptCommand, "title" | "packageName">): Facets => {
-  const environmentMatch = command.title.match(ENVIRONMENT_PATTERN);
-  const environment = environmentMatch ? environmentMatch[1].toLowerCase() : undefined;
-  const name = clean(environmentMatch ? environmentMatch[2] : command.title) ?? command.title;
+const sigilValue = (field: string | undefined) => field?.slice(1).toLowerCase();
 
-  const rawPackage = clean(command.packageName);
-  const categoryMatch = rawPackage?.match(CATEGORY_PATTERN);
+export const facetsOf = (command: Pick<ScriptCommand, "title" | "packageName">): Facets => {
+  const legacyTitle = command.title.match(LEGACY_TITLE_ENVIRONMENT);
+  const name = clean(legacyTitle ? legacyTitle[2] : command.title) ?? command.title;
+
+  const fields = (clean(command.packageName) ?? "")
+    .split(SEPARATOR)
+    .map((field) => field.trim())
+    .filter(Boolean);
+
+  const rawBrand = fields
+    .filter((field) => !ENVIRONMENT_FIELD.test(field) && !CATEGORY_FIELD.test(field))
+    .join(` ${SEPARATOR} `);
+  const legacyBrand = rawBrand.match(LEGACY_CATEGORY);
 
   return {
-    environment,
+    environment: sigilValue(fields.find((field) => ENVIRONMENT_FIELD.test(field))) ?? legacyTitle?.[1].toLowerCase(),
     name,
-    brand: clean(categoryMatch ? categoryMatch[1] : rawPackage),
-    category: categoryMatch ? categoryMatch[2].toLowerCase() : undefined,
+    brand: clean(legacyBrand ? legacyBrand[1] : rawBrand),
+    category: sigilValue(fields.find((field) => CATEGORY_FIELD.test(field))) ?? legacyBrand?.[2].toLowerCase(),
   };
 };
 

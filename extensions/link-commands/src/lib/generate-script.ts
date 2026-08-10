@@ -19,7 +19,7 @@ const singleLine = (value: string) => value.replace(/[\r\n]+/g, " ").trim();
 export type ScriptDraft = {
   title: string;
   target: string;
-  /** `work` becomes a `@work · ` prefix on the title and a `work.` prefix on the filename. */
+  /** `work` becomes an `@work` field on the subtitle and a `work.` prefix on the filename. */
   environment?: string;
   /** The brand — `YouTube`, `The Orchard`. Defaults to the target's domain, humanised. */
   packageName?: string;
@@ -178,8 +178,9 @@ export const buildScript = (draft: ScriptDraft) => {
   const category = draft.category?.trim().replace(/^#/, "");
   const brand = brandOf(draft);
 
-  const title = environment ? `@${environment} · ${draft.title}` : draft.title;
-  const subtitle = [brand, category ? `#${category}` : undefined].filter(Boolean).join(" · ");
+  const subtitle = [brand, environment ? `@${environment}` : undefined, category ? `#${category}` : undefined]
+    .filter(Boolean)
+    .join(" · ");
   const icon = draft.iconReference ?? defaultIconFor(draft.target);
 
   const lines = [
@@ -187,7 +188,7 @@ export const buildScript = (draft: ScriptDraft) => {
     "",
     "# Required parameters:",
     "# @raycast.schemaVersion 1",
-    `# @raycast.title ${singleLine(title)}`,
+    `# @raycast.title ${singleLine(draft.title)}`,
     "# @raycast.mode silent",
     "",
     "# Optional parameters:",
