@@ -7,12 +7,46 @@ import {
   facetCounts,
   facetsOf,
   packageLabel,
+  splitPackageFields,
 } from "./convention";
 import type { ScriptCommand } from "./types";
 
 const command = (title: string, packageName = "") => ({ title, packageName });
 const commands = (...pairs: [string, string][]) =>
   pairs.map(([title, packageName]) => ({ title, packageName })) as ScriptCommand[];
+
+describe("splitPackageFields", () => {
+  it("separates the three axes a subtitle carries", () => {
+    expect(splitPackageFields("Datadog · @work · #dev")).toEqual({
+      brand: "Datadog",
+      environment: "work",
+      category: "dev",
+    });
+  });
+
+  it("leaves a subtitle that carries no sigil entirely alone", () => {
+    expect(splitPackageFields("The Orchard")).toEqual({
+      brand: "The Orchard",
+      environment: undefined,
+      category: undefined,
+    });
+  });
+
+  it("keeps a spaced @ as part of the brand, so a name is never mistaken for a scope", () => {
+    expect(splitPackageFields("Chat @ Mozilla")).toMatchObject({ brand: "Chat @ Mozilla", environment: undefined });
+  });
+
+  it("reports the brand as absent when the field holds nothing but sigils", () => {
+    expect(splitPackageFields("@work · #dev")).toEqual({ brand: undefined, environment: "work", category: "dev" });
+  });
+
+  it("is what facetsOf reads with, so the two can no longer disagree", () => {
+    const packageName = "Jira · @work · #dev";
+    const { brand, environment, category } = splitPackageFields(packageName);
+
+    expect(facetsOf({ title: "Abacus Board", packageName })).toMatchObject({ brand, environment, category });
+  });
+});
 
 describe("facetsOf", () => {
   it("reads all three axes out of the two fields", () => {

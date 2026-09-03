@@ -55,11 +55,17 @@ const clean = (value: string | undefined) => {
 
 const sigilValue = (field: string | undefined) => field?.slice(1).toLowerCase();
 
-export const facetsOf = (command: Pick<ScriptCommand, "title" | "packageName">): Facets => {
-  const legacyTitle = command.title.match(LEGACY_TITLE_ENVIRONMENT);
-  const name = clean(legacyTitle ? legacyTitle[2] : command.title) ?? command.title;
+export type PackageFields = Omit<Facets, "name">;
 
-  const fields = (clean(command.packageName) ?? "")
+/**
+ * The sigil grammar, as one implementation both directions can share. It used to live inside
+ * `facetsOf` and be read-only, while the create form slugified a typed `packageName` whole — so the
+ * writer could emit `datadog-work.ai-usage.sh` for a subtitle the reader parsed as `Datadog` scoped
+ * to `@work`, and the file failed the collection's own naming gate. A parser and a generator that
+ * disagree about one grammar keep producing that until they stop being two implementations.
+ */
+export const splitPackageFields = (packageName: string | undefined): PackageFields => {
+  const fields = (clean(packageName) ?? "")
     .split(SEPARATOR)
     .map((field) => field.trim())
     .filter(Boolean);
@@ -70,11 +76,18 @@ export const facetsOf = (command: Pick<ScriptCommand, "title" | "packageName">):
   const legacyBrand = rawBrand.match(LEGACY_CATEGORY);
 
   return {
-    environment: sigilValue(fields.find((field) => ENVIRONMENT_FIELD.test(field))) ?? legacyTitle?.[1].toLowerCase(),
-    name,
+    environment: sigilValue(fields.find((field) => ENVIRONMENT_FIELD.test(field))),
     brand: clean(legacyBrand ? legacyBrand[1] : rawBrand),
     category: sigilValue(fields.find((field) => CATEGORY_FIELD.test(field))) ?? legacyBrand?.[2].toLowerCase(),
   };
+};
+
+export const facetsOf = (command: Pick<ScriptCommand, "title" | "packageName">): Facets => {
+  const legacyTitle = command.title.match(LEGACY_TITLE_ENVIRONMENT);
+  const name = clean(legacyTitle ? legacyTitle[2] : command.title) ?? command.title;
+  const { brand, environment, category } = splitPackageFields(command.packageName);
+
+  return { environment: environment ?? legacyTitle?.[1].toLowerCase(), name, brand, category };
 };
 
 const titleCase = (value: string) =>
