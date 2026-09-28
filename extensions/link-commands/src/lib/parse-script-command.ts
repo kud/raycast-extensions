@@ -1,4 +1,5 @@
 import { basename, dirname } from "node:path";
+import { titleSlug } from "./deeplink";
 import type { ScriptArgument, ScriptCommand } from "./types";
 
 /**
@@ -48,10 +49,9 @@ export type ParseInput = {
 };
 
 /**
- * The deeplink identifier is the filename without its extension — NOT a slug of `@raycast.title`.
- * Verified against working links in the wild: a script named `flux-quit.sh` titled "Quit Flux" is
- * reached at `raycast://script-commands/flux-quit`, never `quit-flux`. Deriving it from the title
- * produces links that silently fail to resolve.
+ * Keeps both deeplink keys, because Raycast 1 and Raycast 2 address a Script Command differently:
+ * `deeplinkId` is the filename without its extension, which Raycast 1 resolves, and `titleSlug` is the
+ * slug of `@raycast.title`, which Raycast 2 resolves. `deeplinkFor` picks one for the running version.
  */
 export const parseScriptCommand = ({ path, body, isExecutable }: ParseInput): ScriptCommand | undefined => {
   const metadata = readMetadata(body);
@@ -59,6 +59,8 @@ export const parseScriptCommand = ({ path, body, isExecutable }: ParseInput): Sc
 
   const filename = basename(path);
   const deeplinkId = stripExtension(filename);
+
+  const title = metadata.title || deeplinkId;
 
   const argumentsList = ARGUMENT_KEYS.map((key) => parseArgument(metadata[key])).filter(
     (argument): argument is ScriptArgument => argument !== undefined,
@@ -69,11 +71,11 @@ export const parseScriptCommand = ({ path, body, isExecutable }: ParseInput): Sc
     directory: dirname(path),
     filename,
     deeplinkId,
-    deeplink: `raycast://script-commands/${encodeURIComponent(deeplinkId)}`,
+    titleSlug: titleSlug(title),
     body,
     isExecutable,
     schemaVersion: metadata.schemaVersion,
-    title: metadata.title || deeplinkId,
+    title,
     mode: metadata.mode,
     packageName: metadata.packageName,
     icon: metadata.icon,

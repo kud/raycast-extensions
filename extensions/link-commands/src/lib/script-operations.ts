@@ -21,10 +21,11 @@ export const makeExecutable = async (path: string) => {
 };
 
 /**
- * Rewrites one script in place rather than writing a fresh file beside it: the filename is the command's
- * deeplink identifier, so renaming would break every link to it. The mode is restored explicitly after the
- * write, for the same reason `duplicateScript` copies it — a script that silently stopped being executable
- * would vanish from Raycast with no hint why.
+ * Rewrites one script in place rather than writing a fresh file beside it: on Raycast 1 the filename is the
+ * command's deeplink identifier, so renaming would break every link to it. (Raycast 2 addresses it by title,
+ * which this does change — hence the confirmation.) The mode is restored explicitly after the write, for the
+ * same reason `duplicateScript` copies it — a script that silently stopped being executable would vanish
+ * from Raycast with no hint why.
  */
 export const moveEnvironmentInScript = async (path: string) => {
   const contents = await readFile(path, "utf8");

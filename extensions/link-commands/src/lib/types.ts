@@ -17,7 +17,7 @@ export type ScriptCommand = {
   directory: string;
   filename: string;
   deeplinkId: string;
-  deeplink: string;
+  titleSlug: string;
   body: string;
   isExecutable: boolean;
   schemaVersion: string;

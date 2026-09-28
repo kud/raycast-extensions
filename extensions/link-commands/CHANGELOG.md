@@ -1,5 +1,15 @@
 # Link Commands Changelog
 
+## [Raycast 2 Deeplinks] - {PR_MERGE_DATE}
+
+### Fixed
+
+- **Run Script Command** and **Copy Deeplink** did nothing on Raycast 2, which dropped the `raycast://script-commands/<filename>` form and logs it as an unknown deeplink. On Raycast 2 the extension now uses `raycast://extensions/raycast/script-commands/<title-slug>`, where the slug comes from the command's title rather than its filename: `Toggle Built-in Display` becomes `toggle-built-in-display`. Raycast 1 keeps the filename form it has always resolved. The running version decides; both links are never emitted, since a toggle reached twice would land where it started.
+
+### Added
+
+- A **Duplicate title** tag on any command whose title slugs the same as another's, with the other file named in the tooltip and the detail pane. Raycast 2 addresses a command by its title, so two such commands share one deeplink and Raycast opens whichever it finds first. The extension cannot pick for it; renaming one of the two fixes it.
+
 ## [Suggested Titles] - 2026-09-28
 
 ### Added

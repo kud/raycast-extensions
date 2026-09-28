@@ -7,6 +7,7 @@ import {
   List,
   closeMainWindow,
   confirmAlert,
+  environment,
   getPreferenceValues,
   open,
   openExtensionPreferences,
@@ -28,6 +29,7 @@ import {
   packageLabel,
   subtitleFormOf,
 } from "./convention";
+import { deeplinkFor, isRaycast2OrLater, titleCollisions } from "./deeplink";
 import { ALL_FILTER, filterOptions, sectionsFor } from "./grouping";
 import { isLinkCommand, linkTargetOf } from "./link-command";
 import { domainOf } from "./generate-script";
@@ -129,7 +131,26 @@ const buildMarkdown = (command: ScriptCommand, showBodyPreview: boolean) => {
 /** A target carrying an unsubstituted `$1` or `${query}` cannot be opened, so it must not be a link. */
 const isOpenableUrl = (target: string) => /^https?:\/\//i.test(target) && !/\$/.test(target);
 
-const ScriptMetadata = ({ command }: { command: ScriptCommand }) => {
+const deeplinkOf = (command: ScriptCommand) => deeplinkFor(command, environment.raycastVersion);
+
+const sharedTitleNote = (sharesTitleWith: string[]) =>
+  isRaycast2OrLater(environment.raycastVersion)
+    ? `Shares its title with ${sharesTitleWith.join(", ")}, so its deeplink is ambiguous and Raycast may open the other one. Rename one of them.`
+    : `Shares its title with ${sharesTitleWith.join(", ")}. On Raycast 2 their deeplinks would be ambiguous.`;
+
+const rowAccessories = (command: ScriptCommand, sharesTitleWith: string[] | undefined): List.Item.Accessory[] => [
+  ...(sharesTitleWith
+    ? [{ tag: { value: "Duplicate title", color: Color.Yellow }, tooltip: sharedTitleNote(sharesTitleWith) }]
+    : []),
+  ...(command.isExecutable ? [] : [{ icon: Icon.Warning, tooltip: "Not executable" }]),
+];
+
+type ScriptMetadataProps = {
+  command: ScriptCommand;
+  sharesTitleWith?: string[];
+};
+
+const ScriptMetadata = ({ command, sharesTitleWith }: ScriptMetadataProps) => {
   const facets = facetsOf(command);
   const link = linkTargetOf(command);
 
@@ -191,6 +212,13 @@ const ScriptMetadata = ({ command }: { command: ScriptCommand }) => {
       {command.isExecutable ? null : (
         <List.Item.Detail.Metadata.Label title="Executable" text="No — Raycast cannot run it" icon={Icon.Warning} />
       )}
+      {sharesTitleWith ? (
+        <List.Item.Detail.Metadata.Label
+          title="Duplicate Title"
+          text={sharedTitleNote(sharesTitleWith)}
+          icon={Icon.Warning}
+        />
+      ) : null}
       <List.Item.Detail.Metadata.Label title="File" text={basename(command.path)} />
     </List.Item.Detail.Metadata>
   );
@@ -198,7 +226,7 @@ const ScriptMetadata = ({ command }: { command: ScriptCommand }) => {
 
 const runScriptCommand = async (command: ScriptCommand) => {
   await closeMainWindow();
-  await open(command.deeplink);
+  await open(deeplinkOf(command));
 };
 
 const applyMakeExecutable = async (command: ScriptCommand, onRefresh: () => void) => {
@@ -319,7 +347,7 @@ const ScriptActions = ({
       <Action.CopyToClipboard title="Copy Path" content={command.path} shortcut={Keyboard.Shortcut.Common.Copy} />
       <Action.CopyToClipboard
         title="Copy Deeplink"
-        content={command.deeplink}
+        content={deeplinkOf(command)}
         shortcut={{ modifiers: ["cmd", "shift"], key: "d" }}
       />
     </ActionPanel.Section>
@@ -406,6 +434,9 @@ export const SearchView = ({ linksOnly }: SearchViewProps) => {
   // filter when a link actually carries it.
   const commands = linksOnly ? discovered.filter(isLinkCommand) : discovered;
   const skipped = discovered.length - commands.length;
+  // Measured across everything discovered, links or not: a plain script sharing a title with a link
+  // takes its deeplink all the same.
+  const collisions = titleCollisions(discovered);
 
   const { environments, brands, categories } = filterOptions(commands);
   const sections = sectionsFor(commands, selectedFilter, preferences.groupCommands);
@@ -468,11 +499,11 @@ export const SearchView = ({ linksOnly }: SearchViewProps) => {
                 facets.environment ? environmentLabel(facets.environment) : "",
                 facets.category ? categoryLabel(facets.category) : "",
               ].filter(Boolean)}
-              accessories={command.isExecutable ? undefined : [{ icon: Icon.Warning, tooltip: "Not executable" }]}
+              accessories={rowAccessories(command, collisions.get(command.path))}
               detail={
                 <List.Item.Detail
                   markdown={buildMarkdown(command, preferences.showBodyPreview)}
-                  metadata={<ScriptMetadata command={command} />}
+                  metadata={<ScriptMetadata command={command} sharesTitleWith={collisions.get(command.path)} />}
                 />
               }
               actions={
