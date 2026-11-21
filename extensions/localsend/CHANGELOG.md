@@ -1,5 +1,9 @@
 # LocalSend Changelog
 
+## [Clearer Port Conflict Message] - {PR_MERGE_DATE}
+
+- Reworded the "Port 53317 is in use" toast to ask whether the LocalSend app is open on this Mac
+
 ## [Fix Device Discovery Crash] - 2026-10-03
 
 - Fixed `Discover Devices` crashing with `Error: Not running` when the multicast socket was closed twice

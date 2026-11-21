@@ -42,7 +42,11 @@ export default function Command() {
       await showToast({
         style: Toast.Style.Failure,
         title: portInUse ? "Port 53317 is in use" : "Discovery failed",
-        message: portInUse ? "Is the LocalSend app running?" : error instanceof Error ? error.message : "Unknown error",
+        message: portInUse
+          ? "Is the LocalSend app open on this Mac?"
+          : error instanceof Error
+            ? error.message
+            : "Unknown error",
       });
     } finally {
       setIsLoading(false);
