@@ -1,3 +1,8 @@
+## [Containers] - {PR_MERGE_DATE}
+
+- Targets can name a Firefox container: focusing looks for the tab there and opens the URL in it when none is found (requires a foxhop CLI and Fox Hop Firefox extension with container support)
+- The list shows each target's container, and Add/Edit Target gain a Container field
+
 ## [New icon] - 2026-10-05
 
 - New extension icon

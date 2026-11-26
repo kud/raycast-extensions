@@ -14,6 +14,7 @@ type FormValues = {
   strategy: string;
   pick: string;
   navigate: boolean;
+  container: string;
 };
 
 export const UpsertTargetForm = ({ target, prefill, onSave }: Props) => {
@@ -23,6 +24,7 @@ export const UpsertTargetForm = ({ target, prefill, onSave }: Props) => {
     const url = values.url.trim();
     const title = values.title.trim();
     const match = values.match.trim();
+    const container = values.container.trim();
     // An edit keeps the target's own match, so it cannot be blanked; a new
     // target needs a URL or a match to derive from.
     if (editing ? !match : !url && !match) {
@@ -34,7 +36,7 @@ export const UpsertTargetForm = ({ target, prefill, onSave }: Props) => {
     }
     try {
       if (editing) {
-        await editTarget(editing.name, { ...values, url, title, match });
+        await editTarget(editing.name, { ...values, url, title, match, container });
       } else {
         await addTarget({
           url: url || undefined,
@@ -43,6 +45,7 @@ export const UpsertTargetForm = ({ target, prefill, onSave }: Props) => {
           strategy: values.strategy || undefined,
           pick: values.pick || undefined,
           navigate: values.navigate,
+          container: container || undefined,
         });
       }
       onSave();
@@ -88,6 +91,13 @@ export const UpsertTargetForm = ({ target, prefill, onSave }: Props) => {
             ? `${editing.name} · Raycast: focus-${editing.name}`
             : "Generated from the title when saved and never changes afterwards."
         }
+      />
+      <Form.TextField
+        id="container"
+        title="Container"
+        defaultValue={editing?.container ?? ""}
+        placeholder="Default (no container)"
+        info="The Firefox container to look for the tab in, and to open the URL in (e.g. Personal). It must already exist in Firefox."
       />
       <Form.Separator />
       <Form.Description

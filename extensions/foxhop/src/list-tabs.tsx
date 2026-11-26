@@ -41,6 +41,9 @@ const titleCase = (value: string) => value.charAt(0).toUpperCase() + value.slice
 const accessoriesFor = (target: Target): List.Item.Accessory[] => {
   const items: List.Item.Accessory[] = [];
   if (target.favorite) items.push({ icon: Icon.Star, tooltip: "Favourite" });
+  if (target.container) {
+    items.push({ icon: Icon.Layers, tag: target.container, tooltip: "Firefox container" });
+  }
   if (target.pick && target.pick !== "recent") {
     items.push({ tag: titleCase(target.pick) });
   }

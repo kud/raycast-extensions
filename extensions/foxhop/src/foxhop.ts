@@ -13,6 +13,7 @@ export type Target = {
   pick?: "recent" | "first" | "pinned";
   navigate?: boolean;
   favorite?: boolean;
+  container?: string;
 };
 
 export type FirefoxTab = {
@@ -33,6 +34,7 @@ export type UpsertOptions = {
   strategy?: string;
   pick?: string;
   navigate?: boolean;
+  container?: string;
 };
 
 export type EditOptions = {
@@ -42,6 +44,7 @@ export type EditOptions = {
   strategy: string;
   pick: string;
   navigate: boolean;
+  container: string;
 };
 
 const buildEnv = (browser: string): NodeJS.ProcessEnv => ({
@@ -87,10 +90,12 @@ export const addTarget = async (opts: UpsertOptions): Promise<void> => {
   if (opts.strategy) args.push("--strategy", opts.strategy);
   if (opts.pick) args.push("--pick", opts.pick);
   if (opts.navigate) args.push("--navigate");
+  if (opts.container) args.push("--container", opts.container);
   await run(args);
 };
 
-// Edits a target in place; its id never changes. An empty title or URL clears it.
+// Edits a target in place; its id never changes. An empty title, URL or
+// container clears it.
 export const editTarget = async (name: string, opts: EditOptions): Promise<void> => {
   // The --flag=value form keeps a value that starts with a dash from being read as a flag.
   await run([
@@ -102,6 +107,7 @@ export const editTarget = async (name: string, opts: EditOptions): Promise<void>
     `--strategy=${opts.strategy}`,
     `--pick=${opts.pick}`,
     opts.navigate ? "--navigate" : "--no-navigate",
+    `--container=${opts.container}`,
   ]);
 };
 
